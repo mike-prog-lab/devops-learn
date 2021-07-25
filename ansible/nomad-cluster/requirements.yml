@@ -1,0 +1,13 @@
+---
+- src: https://github.com/ansible-community/ansible-consul.git
+  name: ansible-consul
+  scm: git
+  version: v2.5.4
+- src: https://github.com/ansible-community/ansible-nomad.git
+  name: install-nomad
+  scm: git
+  version: v1.9.6
+- src: https://github.com/ansible-community/ansible-vault.git
+  name: ansible-community.ansible-vault
+  scm: git
+  version: master  

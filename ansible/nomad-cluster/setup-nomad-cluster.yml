@@ -1,0 +1,113 @@
+- name: Create required directories on nodes
+  hosts: nomad_instances
+  tasks:
+    - become: true
+      command:
+        cmd: "mkdir -p /etc/nomad.d /export/nomad-data"
+- name: Place server certificates to all nodes
+  hosts: nomad_instances
+  tasks:
+    - name: Copy certificates to nodes
+      copy:
+        src: ./files/cert/nomad/nomad-ca.pem
+        dest: "/etc/nomad.d/"
+    - copy:
+        src: ./files/cert/nomad/server.pem
+        dest: "/etc/nomad.d/"
+    - copy:
+        src: ./files/cert/nomad/server-key.pem
+        dest: "/etc/nomad.d/"
+- name: Place Certificates to client nodes
+  hosts: nomad_clients
+  tasks:
+    - name: Copy certificates to nodes
+      copy:
+        src: ./files/cert/nomad/nomad-ca.pem
+        dest: "/etc/nomad.d/"
+    - copy:
+        src: ./files/cert/nomad/client.pem
+        dest: "/etc/nomad.d/"
+    - copy:
+        src: ./files/cert/nomad/client-key.pem
+        dest: "/etc/nomad.d/"
+- name: Place Certificates to all nodes for CLI
+  hosts: nomad_instances
+  tasks:
+    - name: Copy certificates to nodes
+      copy:
+        src: ./files/cert/nomad/nomad-ca.pem
+        dest: "/etc/nomad.d/"
+    - copy:
+        src: ./files/cert/nomad/cli.pem
+        dest: "/etc/nomad.d/"
+    - copy:
+        src: ./files/cert/nomad/cli-key.pem
+        dest: "/etc/nomad.d/"
+# - name: Install podman
+#   hosts: nomad_clients
+#   become_user: root
+#   become_method: sudo
+#   tasks:
+#     - name: Add the apt key
+#       apt_key:
+#         url: "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_18.04/Release.key"
+#         state: present
+#     - name: Add required apt source
+#       become: true
+#       apt_repository:
+#         repo: "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_18.04/ /"
+#         state: present
+#     - name: Installing podman
+#       apt:
+#         pkg: 
+#           - podman
+#         state: present
+#         update_cache: true
+- name: Setup Consul cluster
+  hosts: consul_instances
+  become_user: root
+  become_method: sudo
+  roles:
+    - { role: ansible-consul }
+  vars:
+    consul_ui: true
+    consul_debug: true
+    consul_client_address: 0.0.0.0
+    consul_tls_verify_incoming: true
+    consul_tls_verify_incoming_https: true
+    consul_tls_verify_server_hostname: true
+    consul_connect_enabled: true
+- name: Setup Vault
+  hosts: vault_instances
+  become_user: root
+  become_method: sudo
+  roles:
+    - { role: ansible-community.ansible-vault }
+  vars:
+    vault_version: 1.7.3
+    vault_cluster_name: "{{ lookup('env', 'VAULT_CLUSTER_NAME') | default('dc1', true) }}"
+    vault_datacenter: "{{ lookup('env', 'VAULT_DATACENTER') | default('dc1', true) }}"
+    vault_enable_log: true
+    vault_tls_disable: true
+    vault_service_registration_consul_enable: false
+    vault_bin_path: /usr/bin
+- name: Setup Nomad cluster
+  hosts: nomad_instances
+  become_user: root
+  become_method: sudo
+  serial:
+    - 1
+    - 2
+    - 10
+  roles:
+    - { role: install-nomad }
+  vars:
+    nomad_debug: true
+    nomad_version: 1.1.2
+    nomad_datacenter: "fra1"
+    nomad_use_consul: true
+    nomad_group_name: nomad_instances
+    nomad_rejoin_after_leave: true
+    nomad_docker_enable: true
+    nomad_podman_enable: false
+    nomad_podman_version: 0.3.0

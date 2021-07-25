@@ -1,0 +1,50 @@
+- name: Install and configure Certbot
+  hosts: core-minio
+  roles:
+    - { role: "geerlingguy.certbot" }
+    - { role: atosatto.minio }
+  vars:
+    certbot_create_if_missing: true
+    certbot_admin_email: "{{ lookup('env', 'CERTBOT_ADMIN_EMAIL') }}"
+    certbot_create_command: >-
+      {{ certbot_script }} certonly --standalone --noninteractive --agree-tos
+      --email {{ cert_item.email | default(certbot_admin_email) }}
+      -d {{ cert_item.domains | join(',') }}
+      {{ '--pre-hook /etc/letsencrypt/renewal-hooks/pre/stop_services'
+        if certbot_create_standalone_stop_services
+      else '' }}
+      {{ '--post-hook /etc/letsencrypt/renewal-hooks/post/start_services'
+        if certbot_create_standalone_stop_services
+      else '' }}
+    certbot_create_standalone_stop_services: []
+    certbot_certs:
+      - domains:
+        - "{{ lookup('env', 'DOMAIN') }}"
+    minio_server_addr: ":443"
+    minio_server_datadirs: 
+    - "/minio-data-1"
+    - "/minio-data-2"
+    - "/minio-data-3"
+    - "/minio-data-4"
+    minio_access_key: "{{ lookup('env', 'MINIO_ACCESS_KEY') }}"
+    minio_secret_key: "{{ lookup('env', 'MINIO_SECRET_KEY') }}"
+  tasks:
+
+  - name: Apply certificates to minio
+    shell:
+      cmd: >-
+        cp /etc/letsencrypt/live/*.minio.core.infra.eml.ua/fullchain.pem /home/minio/.minio/certs/public.crt;
+        cp /etc/letsencrypt/live/*.minio.core.infra.eml.ua/privkey.pem /home/minio/.minio/certs/private.key;
+        chown -R minio:minio /home/minio/.minio/certs
+
+  - name: Setup crontab for minio server restart
+    cron:
+      name: Restart minio server
+      job: systemctl restart minio
+      hour: "3"
+      minute: "35"
+
+  - name: Reload minio server
+    shell:
+      cmd: >-
+        systemctl restart minio

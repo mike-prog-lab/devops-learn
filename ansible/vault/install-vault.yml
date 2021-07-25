@@ -1,0 +1,14 @@
+- name: Setup Nomad cluster
+  hosts: vault_instances
+  become_user: root
+  become_method: sudo
+  roles:
+    - { role: ansible-community.ansible-vault }
+  vars:
+    vault_version: 1.7.3
+    vault_cluster_name: "{{ lookup('env', 'VAULT_CLUSTER_NAME') | default('dc1', true) }}"
+    vault_datacenter: "{{ lookup('env', 'VAULT_DATACENTER') | default('dc1', true) }}"
+    vault_enable_log: true
+    vault_tls_disable: true
+    vault_service_registration_consul_enable: false
+    vault_bin_path: /usr/bin
