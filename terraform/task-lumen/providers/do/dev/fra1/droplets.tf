@@ -12,7 +12,7 @@ module "nomad-cluster" {
 
 resource "digitalocean_droplet" "vault" {
   count              = var.vault_instance_count
-  image              = var.vault_snapshot_id
+  image              = var.vault_image
   name               = "vault-${count.index}"
   region             = var.vault_region
   size               = var.vault_size

@@ -15,10 +15,6 @@ variable "vault_instance_count" {
   type    = number
 }
 
-variable "vault_snapshot_id" {
-  type = string
-}
-
 variable "vault_name" {
   default = "vault"
   type    = string
@@ -46,4 +42,9 @@ variable "ansible_root_path" {
 
 variable "python_env" {
   description = "Path to python environment."
+}
+
+variable "vault_image" {
+  description = "DigitalOcean image for Vault cluster."
+  default     = "ubuntu-18-04-x64"
 }

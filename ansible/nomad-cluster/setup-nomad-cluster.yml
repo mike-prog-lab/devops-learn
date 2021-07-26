@@ -1,48 +1,48 @@
-- name: Create required directories on nodes
-  hosts: nomad_instances
-  tasks:
-    - become: true
-      command:
-        cmd: "mkdir -p /etc/nomad.d /export/nomad-data"
-- name: Place server certificates to all nodes
-  hosts: nomad_instances
-  tasks:
-    - name: Copy certificates to nodes
-      copy:
-        src: ./files/cert/nomad/nomad-ca.pem
-        dest: "/etc/nomad.d/"
-    - copy:
-        src: ./files/cert/nomad/server.pem
-        dest: "/etc/nomad.d/"
-    - copy:
-        src: ./files/cert/nomad/server-key.pem
-        dest: "/etc/nomad.d/"
-- name: Place Certificates to client nodes
-  hosts: nomad_clients
-  tasks:
-    - name: Copy certificates to nodes
-      copy:
-        src: ./files/cert/nomad/nomad-ca.pem
-        dest: "/etc/nomad.d/"
-    - copy:
-        src: ./files/cert/nomad/client.pem
-        dest: "/etc/nomad.d/"
-    - copy:
-        src: ./files/cert/nomad/client-key.pem
-        dest: "/etc/nomad.d/"
-- name: Place Certificates to all nodes for CLI
-  hosts: nomad_instances
-  tasks:
-    - name: Copy certificates to nodes
-      copy:
-        src: ./files/cert/nomad/nomad-ca.pem
-        dest: "/etc/nomad.d/"
-    - copy:
-        src: ./files/cert/nomad/cli.pem
-        dest: "/etc/nomad.d/"
-    - copy:
-        src: ./files/cert/nomad/cli-key.pem
-        dest: "/etc/nomad.d/"
+# - name: Create required directories on nodes
+#   hosts: nomad_instances
+#   tasks:
+#     - become: true
+#       command:
+#         cmd: "mkdir -p /etc/nomad.d /export/nomad-data"
+# - name: Place server certificates to all nodes
+#   hosts: nomad_instances
+#   tasks:
+#     - name: Copy certificates to nodes
+#       copy:
+#         src: ./files/cert/nomad/nomad-ca.pem
+#         dest: "/etc/nomad.d/"
+#     - copy:
+#         src: ./files/cert/nomad/server.pem
+#         dest: "/etc/nomad.d/"
+#     - copy:
+#         src: ./files/cert/nomad/server-key.pem
+#         dest: "/etc/nomad.d/"
+# - name: Place Certificates to client nodes
+#   hosts: nomad_clients
+#   tasks:
+#     - name: Copy certificates to nodes
+#       copy:
+#         src: ./files/cert/nomad/nomad-ca.pem
+#         dest: "/etc/nomad.d/"
+#     - copy:
+#         src: ./files/cert/nomad/client.pem
+#         dest: "/etc/nomad.d/"
+#     - copy:
+#         src: ./files/cert/nomad/client-key.pem
+#         dest: "/etc/nomad.d/"
+# - name: Place Certificates to all nodes for CLI
+#   hosts: nomad_instances
+#   tasks:
+#     - name: Copy certificates to nodes
+#       copy:
+#         src: ./files/cert/nomad/nomad-ca.pem
+#         dest: "/etc/nomad.d/"
+#     - copy:
+#         src: ./files/cert/nomad/cli.pem
+#         dest: "/etc/nomad.d/"
+#     - copy:
+#         src: ./files/cert/nomad/cli-key.pem
+#         dest: "/etc/nomad.d/"
 # - name: Install podman
 #   hosts: nomad_clients
 #   become_user: root
@@ -63,60 +63,94 @@
 #           - podman
 #         state: present
 #         update_cache: true
-- hosts: nomad_clients
-  become: true
-  tasks:
-    - name: Install aptitude using apt
-      apt: name=aptitude state=latest update_cache=yes force_apt_get=yes
+# - hosts: nomad_clients
+#   become: true
+#   tasks:
+#     - name: Install aptitude using apt
+#       apt: name=aptitude state=latest update_cache=yes force_apt_get=yes
 
-    - name: Install required system packages
-      apt: name={{ item }} state=latest update_cache=yes
-      loop: [ 'apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common', 'python3-pip', 'virtualenv', 'python3-setuptools']
+#     - name: Install required system packages
+#       apt: name={{ item }} state=latest update_cache=yes
+#       loop: [ 'apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common', 'python3-pip', 'virtualenv', 'python3-setuptools']
 
-    - name: Add Docker GPG apt Key
-      apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        state: present
+#     - name: Add Docker GPG apt Key
+#       apt_key:
+#         url: https://download.docker.com/linux/ubuntu/gpg
+#         state: present
 
-    - name: Add Docker Repository
-      apt_repository:
-        repo: deb https://download.docker.com/linux/ubuntu bionic stable
-        state: present
+#     - name: Add Docker Repository
+#       apt_repository:
+#         repo: deb https://download.docker.com/linux/ubuntu bionic stable
+#         state: present
 
-    - name: Update apt and install docker-ce
-      apt: update_cache=yes name=docker-ce state=latest
+#     - name: Update apt and install docker-ce
+#       apt: update_cache=yes name=docker-ce state=latest
 
-    - name: Install Docker Module for Python
-      pip:
-        name: docker
-- name: Setup Consul cluster
+#     - name: Install Docker Module for Python
+#       pip:
+#         name: docker
+# - name: Setup Consul cluster
+#   hosts: consul_instances
+#   become_user: root
+#   become_method: sudo
+#   roles:
+#     - { role: ansible-consul }
+#   vars:
+#     consul_ui: true
+#     consul_debug: true
+#     consul_client_address: 0.0.0.0
+#     consul_tls_verify_incoming: true
+#     consul_tls_verify_incoming_https: true
+#     consul_tls_verify_server_hostname: true
+#     consul_connect_enabled: true
+#     consul_acl_default_policy: "deny"
+- name: Setup Consul ACL policies
   hosts: consul_instances
   become_user: root
   become_method: sudo
-  roles:
-    - { role: ansible-consul }
-  vars:
-    consul_ui: true
-    consul_debug: true
-    consul_client_address: 0.0.0.0
-    consul_tls_verify_incoming: true
-    consul_tls_verify_incoming_https: true
-    consul_tls_verify_server_hostname: true
-    consul_connect_enabled: true
-- name: Setup Vault
-  hosts: vault_instances
-  become_user: root
-  become_method: sudo
-  roles:
-    - { role: ansible-community.ansible-vault }
-  vars:
-    vault_version: 1.7.3
-    vault_cluster_name: "{{ lookup('env', 'VAULT_CLUSTER_NAME') | default('dc1', true) }}"
-    vault_datacenter: "{{ lookup('env', 'VAULT_DATACENTER') | default('dc1', true) }}"
-    vault_enable_log: true
-    vault_tls_disable: true
-    vault_service_registration_consul_enable: false
-    vault_bin_path: /usr/bin
+  run_once: true
+  tasks:
+    - name: Check if Nomad Server ACL policy already registered.
+      command: consul acl token list | grep 'Nomad Server Agent'
+      register: server_exists
+    - name: Check if Nomad Client ACL policy already registered.
+      command: consul acl token list | grep 'Nomad Client Agent'
+      register: client_exists
+    - name: Create and store Nomad Server ACL policies
+      # run_once: true
+      copy:
+        src: ./files/policies/nomad-server-policy.hcl
+        dest: /tmp/
+        backup: true
+      when: server_exists.stdout == ""
+    - name: Create and store Nomad Client ACL policies
+      # run_once: true
+      copy:
+        src: ./files/policies/nomad-client-policy.hcl
+        dest: /tmp/
+        backup: true
+      when: client_exists.stdout == ""
+    - name: Generate Nomad Server ACL token
+      command: consul acl token create -policy-name "nomad-server" -description "Nomad Server Agent" | grep "SecretID:" | sed -e 's/^SecretID:\s*//g' | tee /tmp/nomad-server-agent.token
+      when: server_exists.stdout == ""
+    - name: Generate Nomad Client ACL token 
+      # run_once: true
+      command: consul acl token create -policy-name "nomad-client" -description "Nomad Client Agent" | grep "SecretID:" | sed -e 's/^SecretID:\s*//g' | tee /tmp/nomad-server-agent.token
+      when: client_exists.stdout == ""
+# - name: Setup Vault
+#   hosts: vault_instances
+#   become_user: root
+#   become_method: sudo
+#   roles:
+#     - { role: ansible-community.ansible-vault }
+#   vars:
+#     vault_version: 1.7.3
+#     vault_cluster_name: "{{ lookup('env', 'VAULT_CLUSTER_NAME') | default('dc1', true) }}"
+#     vault_datacenter: "{{ lookup('env', 'VAULT_DATACENTER') | default('dc1', true) }}"
+#     vault_enable_log: true
+#     vault_tls_disable: true
+#     vault_service_registration_consul_enable: false
+#     vault_bin_path: /usr/
 - name: Setup Nomad cluster
   hosts: nomad_instances
   become_user: root
@@ -137,3 +171,5 @@
     nomad_docker_enable: true
     nomad_podman_enable: false
     nomad_podman_version: 0.3.0
+    nomad_consul_tokens_dir: "{{ lookup('env', 'NOMAD_CONSUL_TOKENS_DIR') | default(false, true) }}"
+    nomad_consul_token: "{{ lookup('file', nomad_consul_tokens_dir + '/nomad-' + nomad_node_role + '-agent.token') }}"
