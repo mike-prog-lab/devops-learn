@@ -67,6 +67,7 @@ consul_instances = [create_consul_instance(host, 'server') for host in args.noma
 
 args_groups.append(('nomad_instances', nomad_instances, None))
 args_groups.append(('consul_instances', consul_instances, None))
+args_groups.append(('consul_manage_instance', [consul_instances[0]], None))
 
 try:
     for group, hosts, callback in args_groups:

@@ -104,39 +104,84 @@
 #     consul_tls_verify_server_hostname: true
 #     consul_connect_enabled: true
 #     consul_acl_default_policy: "deny"
-- name: Setup Consul ACL policies
-  hosts: consul_instances
+- name: Setup Consul ACL policies for Nomad
+  hosts: consul_manage_instance
   become_user: root
   become_method: sudo
-  run_once: true
   tasks:
-    - name: Check if Nomad Server ACL policy already registered.
-      command: consul acl token list | grep 'Nomad Server Agent'
-      register: server_exists
-    - name: Check if Nomad Client ACL policy already registered.
-      command: consul acl token list | grep 'Nomad Client Agent'
-      register: client_exists
-    - name: Create and store Nomad Server ACL policies
-      # run_once: true
+    - name: Check if Nomad Server ACL Token exists
+      shell: consul acl token list -token {{ consul_bootstrap_token }} | grep 'Nomad Server Agent'
+      register: server_token_exists
+      ignore_errors: true
+      
+    - name: Check if Nomad Client ACL Token exists
+      shell: consul acl token list -token {{ consul_bootstrap_token }} | grep 'Nomad Client Agent'
+      register: client_token_exists
+      ignore_errors: true
+
+    - name: Check if Nomad Server ACL policy already registered
+      shell: consul acl policy list -token {{ consul_bootstrap_token }} | grep 'Nomad Server Policy'
+      register: server_policy_exists
+      ignore_errors: true
+      
+    - name: Check if Nomad Client ACL policy already registered
+      shell: consul acl policy list -token {{ consul_bootstrap_token }} | grep 'Nomad Client Policy'
+      register: client_policy_exists
+      ignore_errors: true
+
+    - name: Store and create Nomad Server ACL policy
       copy:
         src: ./files/policies/nomad-server-policy.hcl
-        dest: /tmp/
+        dest: /var/
         backup: true
-      when: server_exists.stdout == ""
-    - name: Create and store Nomad Client ACL policies
-      # run_once: true
+      when: server_policy_exists.stdout == ""
+    - command: consul acl policy create -name "nomad-server" -description "Nomad Server Policy" -rules @/var/nomad-server-policy.hcl -token {{ consul_bootstrap_token }}
+      when: server_policy_exists.stdout == ""
+
+    - name: Store and create Nomad Client ACL policy
       copy:
         src: ./files/policies/nomad-client-policy.hcl
-        dest: /tmp/
+        dest: /var/
         backup: true
-      when: client_exists.stdout == ""
+      when: client_policy_exists.stdout == ""
+    - command: consul acl policy create -name "nomad-client" -description "Nomad Client Policy" -rules @/var/nomad-client-policy.hcl -token {{ consul_bootstrap_token }}
+      when: client_policy_exists.stdout == ""
+
     - name: Generate Nomad Server ACL token
-      command: consul acl token create -policy-name "nomad-server" -description "Nomad Server Agent" | grep "SecretID:" | sed -e 's/^SecretID:\s*//g' | tee /tmp/nomad-server-agent.token
-      when: server_exists.stdout == ""
-    - name: Generate Nomad Client ACL token 
-      # run_once: true
-      command: consul acl token create -policy-name "nomad-client" -description "Nomad Client Agent" | grep "SecretID:" | sed -e 's/^SecretID:\s*//g' | tee /tmp/nomad-server-agent.token
-      when: client_exists.stdout == ""
+      command: consul acl token create -policy-name "nomad-server" -description "Nomad Server Agent" -token {{ consul_bootstrap_token }}
+      when: server_token_exists.stdout == ""
+    - name: Generate Nomad Client ACL token
+      command: consul acl token create -policy-name "nomad-client" -description "Nomad Client Agent" -token {{ consul_bootstrap_token }}
+      when: client_token_exists.stdout == ""
+
+    - name: Print server_token_exists
+      debug:
+        var: server_token_exists
+    - name: Print client_token_exists
+      debug:
+        var: client_token_exists
+     
+    - name: Get Nomad Server ACL token ID
+      shell: consul acl token list -token {{ consul_bootstrap_token }} | grep "Nomad Server Agent" -B 2 | grep "AccessorID:" | sed -e 's/^AccessorID:\s*//g'
+      register: server_token_id
+    - name: Store and Fetch Nomad Server ACL secret
+      shell: consul acl token read -id {{ server_token_id.stdout }} -token {{ consul_bootstrap_token }} | grep "SecretID:" | sed -e 's/^SecretID:\s*//g' | tee /var/nomad-server-agent.token
+    - fetch:
+        src: /var/nomad-server-agent.token
+        dest: ./files/tokens/consul/nomad/
+        flat: true
+
+    - name: Get Nomad Client ACL token ID
+      shell: consul acl token list -token {{ consul_bootstrap_token }} | grep "Nomad Client Agent" -B 2 | grep "AccessorID:" | sed -e 's/^AccessorID:\s*//g'
+      register: client_token_id
+    - name: Store and Fetch Nomad Client ACL secret
+      shell: consul acl token read -id {{ client_token_id.stdout }} -token {{ consul_bootstrap_token }} | grep "SecretID:" | sed -e 's/^SecretID:\s*//g' | tee /var/nomad-client-agent.token
+    - fetch:
+        src: /var/nomad-client-agent.token
+        dest: ./files/tokens/consul/nomad/
+        flat: true
+  vars:
+    consul_bootstrap_token: "{{ lookup('file', './files/tokens/consul/nomad/bootstrap.token') | default('', true) }}"
 # - name: Setup Vault
 #   hosts: vault_instances
 #   become_user: root
