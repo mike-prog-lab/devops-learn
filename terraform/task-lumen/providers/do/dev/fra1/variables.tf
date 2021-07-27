@@ -9,6 +9,16 @@ variable "ssh_pub_key" {
   type        = string
 }
 
+variable "nomad_servers" {
+  description = "Count of Nomad servers"
+  type        = number
+}
+
+variable "nomad_clients" {
+  description = "Count of Nomad clients"
+  type        = number
+}
+
 # Vault cluster configuration.
 variable "vault_instance_count" {
   default = 1

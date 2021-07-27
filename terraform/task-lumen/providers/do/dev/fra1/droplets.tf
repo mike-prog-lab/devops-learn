@@ -1,8 +1,8 @@
 module "nomad-cluster" {
   source = "../../modules/nomad/nomad-cluster"
 
-  nomad_server_count = 3
-  nomad_client_count = 2
+  nomad_server_count = var.nomad_servers
+  nomad_client_count = var.nomad_clients
 
   droplet_region_slug = "fra1"
   ssh_keys            = [var.ssh_pub_key]
