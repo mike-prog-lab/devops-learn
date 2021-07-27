@@ -1,109 +1,89 @@
-# - name: Create required directories on nodes
-#   hosts: nomad_instances
-#   tasks:
-#     - become: true
-#       command:
-#         cmd: "mkdir -p /etc/nomad.d /export/nomad-data"
-# - name: Place server certificates to all nodes
-#   hosts: nomad_instances
-#   tasks:
-#     - name: Copy certificates to nodes
-#       copy:
-#         src: ./files/cert/nomad/nomad-ca.pem
-#         dest: "/etc/nomad.d/"
-#     - copy:
-#         src: ./files/cert/nomad/server.pem
-#         dest: "/etc/nomad.d/"
-#     - copy:
-#         src: ./files/cert/nomad/server-key.pem
-#         dest: "/etc/nomad.d/"
-# - name: Place Certificates to client nodes
-#   hosts: nomad_clients
-#   tasks:
-#     - name: Copy certificates to nodes
-#       copy:
-#         src: ./files/cert/nomad/nomad-ca.pem
-#         dest: "/etc/nomad.d/"
-#     - copy:
-#         src: ./files/cert/nomad/client.pem
-#         dest: "/etc/nomad.d/"
-#     - copy:
-#         src: ./files/cert/nomad/client-key.pem
-#         dest: "/etc/nomad.d/"
-# - name: Place Certificates to all nodes for CLI
-#   hosts: nomad_instances
-#   tasks:
-#     - name: Copy certificates to nodes
-#       copy:
-#         src: ./files/cert/nomad/nomad-ca.pem
-#         dest: "/etc/nomad.d/"
-#     - copy:
-#         src: ./files/cert/nomad/cli.pem
-#         dest: "/etc/nomad.d/"
-#     - copy:
-#         src: ./files/cert/nomad/cli-key.pem
-#         dest: "/etc/nomad.d/"
-# - name: Install podman
-#   hosts: nomad_clients
-#   become_user: root
-#   become_method: sudo
-#   tasks:
-#     - name: Add the apt key
-#       apt_key:
-#         url: "https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_18.04/Release.key"
-#         state: present
-#     - name: Add required apt source
-#       become: true
-#       apt_repository:
-#         repo: "deb https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/xUbuntu_18.04/ /"
-#         state: present
-#     - name: Installing podman
-#       apt:
-#         pkg: 
-#           - podman
-#         state: present
-#         update_cache: true
-# - hosts: nomad_clients
-#   become: true
-#   tasks:
-#     - name: Install aptitude using apt
-#       apt: name=aptitude state=latest update_cache=yes force_apt_get=yes
+- name: Create required directories on nodes
+  hosts: nomad_instances
+  tasks:
+    - become: true
+      command:
+        cmd: "mkdir -p /etc/nomad.d /export/nomad-data"
+- name: Place server certificates to all nodes
+  hosts: nomad_instances
+  tasks:
+    - name: Copy certificates to nodes
+      copy:
+        src: ./files/cert/nomad/nomad-ca.pem
+        dest: "/etc/nomad.d/"
+    - copy:
+        src: ./files/cert/nomad/server.pem
+        dest: "/etc/nomad.d/"
+    - copy:
+        src: ./files/cert/nomad/server-key.pem
+        dest: "/etc/nomad.d/"
+- name: Place Certificates to client nodes
+  hosts: nomad_clients
+  tasks:
+    - name: Copy certificates to nodes
+      copy:
+        src: ./files/cert/nomad/nomad-ca.pem
+        dest: "/etc/nomad.d/"
+    - copy:
+        src: ./files/cert/nomad/client.pem
+        dest: "/etc/nomad.d/"
+    - copy:
+        src: ./files/cert/nomad/client-key.pem
+        dest: "/etc/nomad.d/"
+- name: Place Certificates to all nodes for CLI
+  hosts: nomad_instances
+  tasks:
+    - name: Copy certificates to nodes
+      copy:
+        src: ./files/cert/nomad/nomad-ca.pem
+        dest: "/etc/nomad.d/"
+    - copy:
+        src: ./files/cert/nomad/cli.pem
+        dest: "/etc/nomad.d/"
+    - copy:
+        src: ./files/cert/nomad/cli-key.pem
+        dest: "/etc/nomad.d/"
+- hosts: nomad_clients
+  become: true
+  tasks:
+    - name: Install aptitude using apt
+      apt: name=aptitude state=latest update_cache=yes force_apt_get=yes
 
-#     - name: Install required system packages
-#       apt: name={{ item }} state=latest update_cache=yes
-#       loop: [ 'apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common', 'python3-pip', 'virtualenv', 'python3-setuptools']
+    - name: Install required system packages
+      apt: name={{ item }} state=latest update_cache=yes
+      loop: [ 'apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common', 'python3-pip', 'virtualenv', 'python3-setuptools']
 
-#     - name: Add Docker GPG apt Key
-#       apt_key:
-#         url: https://download.docker.com/linux/ubuntu/gpg
-#         state: present
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
 
-#     - name: Add Docker Repository
-#       apt_repository:
-#         repo: deb https://download.docker.com/linux/ubuntu bionic stable
-#         state: present
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu bionic stable
+        state: present
 
-#     - name: Update apt and install docker-ce
-#       apt: update_cache=yes name=docker-ce state=latest
+    - name: Update apt and install docker-ce
+      apt: update_cache=yes name=docker-ce state=latest
 
-#     - name: Install Docker Module for Python
-#       pip:
-#         name: docker
-# - name: Setup Consul cluster
-#   hosts: consul_instances
-#   become_user: root
-#   become_method: sudo
-#   roles:
-#     - { role: ansible-consul }
-#   vars:
-#     consul_ui: true
-#     consul_debug: true
-#     consul_client_address: 0.0.0.0
-#     consul_tls_verify_incoming: true
-#     consul_tls_verify_incoming_https: true
-#     consul_tls_verify_server_hostname: true
-#     consul_connect_enabled: true
-#     consul_acl_default_policy: "deny"
+    - name: Install Docker Module for Python
+      pip:
+        name: docker
+- name: Setup Consul cluster
+  hosts: consul_instances
+  become_user: root
+  become_method: sudo
+  roles:
+    - { role: ansible-consul }
+  vars:
+    consul_ui: true
+    consul_debug: true
+    consul_client_address: 0.0.0.0
+    consul_tls_verify_incoming: true
+    consul_tls_verify_incoming_https: true
+    consul_tls_verify_server_hostname: true
+    consul_connect_enabled: true
+    consul_acl_default_policy: deny
 - name: Setup Consul ACL policies for Nomad
   hosts: consul_manage_instance
   become_user: root
@@ -154,13 +134,6 @@
       command: consul acl token create -policy-name "nomad-client" -description "Nomad Client Agent" -token {{ consul_bootstrap_token }}
       when: client_token_exists.stdout == ""
 
-    - name: Print server_token_exists
-      debug:
-        var: server_token_exists
-    - name: Print client_token_exists
-      debug:
-        var: client_token_exists
-     
     - name: Get Nomad Server ACL token ID
       shell: consul acl token list -token {{ consul_bootstrap_token }} | grep "Nomad Server Agent" -B 2 | grep "AccessorID:" | sed -e 's/^AccessorID:\s*//g'
       register: server_token_id
@@ -182,20 +155,20 @@
         flat: true
   vars:
     consul_bootstrap_token: "{{ lookup('file', './files/tokens/consul/nomad/bootstrap.token') | default('', true) }}"
-# - name: Setup Vault
-#   hosts: vault_instances
-#   become_user: root
-#   become_method: sudo
-#   roles:
-#     - { role: ansible-community.ansible-vault }
-#   vars:
-#     vault_version: 1.7.3
-#     vault_cluster_name: "{{ lookup('env', 'VAULT_CLUSTER_NAME') | default('dc1', true) }}"
-#     vault_datacenter: "{{ lookup('env', 'VAULT_DATACENTER') | default('dc1', true) }}"
-#     vault_enable_log: true
-#     vault_tls_disable: true
-#     vault_service_registration_consul_enable: false
-#     vault_bin_path: /usr/
+- name: Setup Vault
+  hosts: vault_instances
+  become_user: root
+  become_method: sudo
+  roles:
+    - { role: ansible-community.ansible-vault }
+  vars:
+    vault_version: 1.7.3
+    vault_cluster_name: "{{ lookup('env', 'VAULT_CLUSTER_NAME') | default('dc1', true) }}"
+    vault_datacenter: "{{ lookup('env', 'VAULT_DATACENTER') | default('dc1', true) }}"
+    vault_enable_log: true
+    vault_tls_disable: true
+    vault_service_registration_consul_enable: false
+    vault_bin_path: /usr/
 - name: Setup Nomad cluster
   hosts: nomad_instances
   become_user: root

@@ -3,7 +3,7 @@ agent_prefix "nomad-client" {
 }
 
 node_prefix "nomad-client" {
-  policy = "read"
+  policy = "write"
 }
 
 service_prefix "nomad-clients" {
