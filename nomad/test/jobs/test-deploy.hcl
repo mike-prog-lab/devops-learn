@@ -1,5 +1,6 @@
-job "countdash" {
-  datacenters = ["dc1"]
+job "test-deploy" {
+  datacenters = ["fra1"]
+
   group "api" {
     network {
       mode = "bridge"
@@ -12,12 +13,22 @@ job "countdash" {
       connect {
         sidecar_service {}
       }
+
+      check {
+        expose   = true
+        type     = "http"
+        name     = "api-health"
+        path     = "/health"
+        interval = "10s"
+        timeout  = "3s"
+      }
     }
 
     task "web" {
       driver = "docker"
+
       config {
-        image = "hashicorpnomad/counter-api:v1"
+        image = "hashicorpnomad/counter-api:v3"
       }
     }
   }
@@ -25,6 +36,7 @@ job "countdash" {
   group "dashboard" {
     network {
       mode = "bridge"
+
       port "http" {
         static = 9002
         to     = 9002
@@ -49,11 +61,13 @@ job "countdash" {
 
     task "dashboard" {
       driver = "docker"
+
       env {
         COUNTING_SERVICE_URL = "http://${NOMAD_UPSTREAM_ADDR_count_api}"
       }
+
       config {
-        image = "hashicorpnomad/counter-dashboard:v1"
+        image = "hashicorpnomad/counter-dashboard:v3"
       }
     }
   }
