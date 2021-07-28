@@ -7,6 +7,19 @@ resource "digitalocean_droplet" "nomad-server-droplet" {
   ssh_keys = var.ssh_keys
 
   tags = ["nomad-server"]
+
+  provisioner "remote-exec" {
+    when       = destroy
+    on_failure = continue
+    inline = [
+      "consul leave -token=$(cat /etc/consul/config.json | jq -rc '.acl.tokens.agent')",
+    ]
+
+    connection {
+      type = "ssh"
+      host = self.ipv4_address
+    }
+  }
 }
 
 resource "digitalocean_droplet" "nomad-client-droplet" {
@@ -18,4 +31,17 @@ resource "digitalocean_droplet" "nomad-client-droplet" {
   ssh_keys = var.ssh_keys
 
   tags = ["nomad-client"]
+
+  provisioner "remote-exec" {
+    when       = destroy
+    on_failure = continue
+    inline = [
+      "consul leave -token=$(cat /etc/consul/config.json | jq -rc '.acl.tokens.agent')",
+    ]
+
+    connection {
+      type = "ssh"
+      host = self.ipv4_address
+    }
+  }
 }

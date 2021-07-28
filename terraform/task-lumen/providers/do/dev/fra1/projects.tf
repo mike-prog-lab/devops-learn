@@ -6,7 +6,8 @@ resource "digitalocean_project" "tasks-lumen" {
 
   resources = concat(
     tolist(module.nomad-cluster.server-nodes)[*].urn,
-    tolist(module.nomad-cluster.client-nodes)[*].urn
+    tolist(module.nomad-cluster.client-nodes)[*].urn,
+    tolist(digitalocean_droplet.vault)[*].urn
   )
 
   # resources = tolist(digitalocean_droplet.vault)[*].urn

@@ -30,7 +30,9 @@ resource "digitalocean_droplet" "vault" {
 resource "null_resource" "nomad-cluster" {
   # Changes to any instance of the cluster requires re-provisioning
   triggers = {
-    cluster_instance_ids = "${join(",", module.nomad-cluster.server-nodes[*].ipv4_address)},${join(",", digitalocean_droplet.vault[*].ipv4_address)}"
+    nomad_servers_count = var.nomad_servers
+    nomad_clients_count = var.nomad_clients
+    nomad_client_ips    = "${join(",", module.nomad-cluster.client-nodes[*].ipv4_address)}"
   }
 
   provisioner "local-exec" {
