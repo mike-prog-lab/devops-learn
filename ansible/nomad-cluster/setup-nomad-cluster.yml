@@ -43,7 +43,8 @@
     - copy:
         src: ./files/cert/nomad/cli-key.pem
         dest: "/etc/nomad.d/"
-- hosts: nomad_clients
+- name: Install Docker on Nomad client nodes
+  hosts: nomad_clients
   become: true
   tasks:
     - name: Install aptitude using apt
@@ -69,6 +70,12 @@
     - name: Install Docker Module for Python
       pip:
         name: docker
+- name: Install help tools for nodes
+  hosts: nomad_clients
+  become: true
+  tasks:
+    - name: Install CLI json processor
+      apt: name=jq state=latest
 - name: Setup Consul cluster
   hosts: consul_instances
   become_user: root
@@ -84,6 +91,7 @@
     consul_tls_verify_server_hostname: true
     consul_connect_enabled: true
     consul_acl_default_policy: deny
+    consul_ports_grpc: 8502
 - name: Setup Consul ACL policies for Nomad
   hosts: consul_manage_instance
   become_user: root
@@ -169,6 +177,19 @@
     vault_tls_disable: true
     vault_service_registration_consul_enable: false
     vault_bin_path: /usr/
+- name: Install CNI plugin
+  hosts: nomad_instances
+  become_user: root
+  become_method: sudo
+  tasks:
+    - name: Crate directory for CNI plugin
+      become: true
+      command: mkdir -p /opt/cni/bin
+    - name: Download CNI plugin
+      command: curl -L -o cni-plugins.tgz https://github.com/containernetworking/plugins/releases/download/v0.8.1/cni-plugins-linux-amd64-v0.8.1.tgz
+    - name: Unpack CNI plugin to created directory
+      become: true
+      command: tar -C /opt/cni/bin -xzf cni-plugins.tgz
 - name: Setup Nomad cluster
   hosts: nomad_instances
   become_user: root

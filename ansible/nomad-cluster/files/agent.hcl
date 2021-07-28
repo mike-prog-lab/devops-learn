@@ -1,11 +1,7 @@
-node_prefix "nomad-client" {
+node_prefix "" {
   policy = "write"
 }
 
-node_prefix "nomad-server" {
-  policy = "write"
-}
-
-service_prefix "" {
+agent_prefix "" {
   policy = "write"
 }
