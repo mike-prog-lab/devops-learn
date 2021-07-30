@@ -1,4 +1,48 @@
 job "django-app" {
+  datacenters = ["fra1"]
+
+  group "frontend" {
+    count = 2
+
+    network {
+      mode = "bridge"
+
+      port "ingress" {
+        static = 80
+        to     = 8000
+      }
+    }
+
+    service {
+      name = "nomadrepofe"
+      port = "8000"
+
+      connect {
+        sidecar_service {
+          proxy {
+            upstreams {
+              destination_name = "nomadrepodb"
+              local_bind_port  = 5432
+            }
+          }
+        }
+      }
+    }
+
+    task "frontend" {
+      driver = "docker"
+
+      config {
+        image = "schmichael/nomadrepo:0.5"
+      }
+
+      resources {
+        cpu    = 300
+        memory = 500
+      }
+    }
+  }
+
   group "db" {
     network {
       mode = "bridge"
@@ -20,7 +64,8 @@ job "django-app" {
       }
 
       env {
-        POSTGRES_PASSWORD = "<TODO: Use Vault!>"
+        # TODO: use Vault instead!
+        POSTGRES_PASSWORD = "password"
       }
 
       resources {
