@@ -73,5 +73,29 @@ job "django-app" {
         memory = 300
       }
     }
+
+    task "initdb" {
+      lifecycle {
+        hook    = "prestart"
+        sidecar = false
+      }
+
+      driver = "docker"
+
+      config {
+        image   = "schmichael/nomadrepo:0.5"
+        command = "/bin/bash"
+        args = [
+          "-c",
+          "chmod +x local/initdb.sh && exec local/initdb.sh",
+        ]
+      }
+
+      template {
+        data = ...
+        destination = "local/initdb.sh"
+        change_mode = "noop"
+      }
+    }
   }
 }
